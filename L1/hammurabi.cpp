@@ -14,7 +14,7 @@ const int wheatPerHuman = 20;
 const int maxAcresPerHuman = 10;
 const double plagueProbability = 0.15;
 
-const int wheatSowPerAcre = 5; //Сколько пшеницы засеять на 1 акр
+const int wheatSowPerAcre = 5; //РЎРєРѕР»СЊРєРѕ РїС€РµРЅРёС†С‹ Р·Р°СЃРµСЏС‚СЊ РЅР° 1 Р°РєСЂ
 const int minWheatGetPerAcre = 1;
 const int maxWheatGetPerAcre = 6;
 const int roundsCount = 10;
@@ -61,17 +61,17 @@ double getPercent(double d)
 string getRepPhrase(double p)
 {
     if(p < 0.3)
-        return "Люди проклинают вас!";
+        return "Р›СЋРґРё РїСЂРѕРєР»РёРЅР°СЋС‚ РІР°СЃ!";
     else if(p < 0.5)
-        return "Люди ненавидят вас!";
+        return "Р›СЋРґРё РЅРµРЅР°РІРёРґСЏС‚ РІР°СЃ!";
     else if(p < 0.70)
-        return "Люди терпят вас.";
+        return "Р›СЋРґРё С‚РµСЂРїСЏС‚ РІР°СЃ.";
     else if(p < 0.80)
-        return "Люди ожидают от вас большего.";
+        return "Р›СЋРґРё РѕР¶РёРґР°СЋС‚ РѕС‚ РІР°СЃ Р±РѕР»СЊС€РµРіРѕ.";
     else if(p < 0.95)
-        return "Люди любят вас!";
+        return "Р›СЋРґРё Р»СЋР±СЏС‚ РІР°СЃ!";
     else
-        return "Люди восхищаются вами!";
+        return "Р›СЋРґРё РІРѕСЃС…РёС‰Р°СЋС‚СЃСЏ РІР°РјРё!";
 }
 
 void setGameData(bool fromFile = false)
@@ -182,10 +182,10 @@ int main()
     while(1){
         system("cls");
         cout << "** Hammurabi game **" << endl;
-        cout << "   " << (c == 72 ? ">" : " ") << " Новая игра" << endl;
+        cout << "   " << (c == 72 ? ">" : " ") << " РќРѕРІР°СЏ РёРіСЂР°" << endl;
         if(saveExist)
-            cout << "   " << (c == 80 ? ">" : " ") << " Продолжить игру" << endl;
-        cout << endl << "Up arrow/Down arrow - сменить пункт, Enter - выбрать" << endl;
+            cout << "   " << (c == 80 ? ">" : " ") << " РџСЂРѕРґРѕР»Р¶РёС‚СЊ РёРіСЂСѓ" << endl;
+        cout << endl << "Up arrow/Down arrow - СЃРјРµРЅРёС‚СЊ РїСѓРЅРєС‚, Enter - РІС‹Р±СЂР°С‚СЊ" << endl;
         int in = getch();
         if(in == 13)
             break;
@@ -200,40 +200,40 @@ int main()
         saveGameData();
         system("cls");
         cout << endl;
-        cout << "Год: " << i << endl;
-        cout << "Ваша популярность: " << getPercent(popularity) << "%" << endl;
-        cout << "   " << (popularityBySatiety - pHungerCoef >= 0 ? "+" : "") << getPercent(popularityBySatiety - pHungerCoef) << "% за сытость населения" <<  endl;
-        cout << "   " << (popularityByAcres - pAcreCoef >= 0 ? "+" : "") << getPercent(popularityByAcres - pAcreCoef) << "% за количество акров на человека" <<  endl;
+        cout << "Р“РѕРґ: " << i << endl;
+        cout << "Р’Р°С€Р° РїРѕРїСѓР»СЏСЂРЅРѕСЃС‚СЊ: " << getPercent(popularity) << "%" << endl;
+        cout << "   " << (popularityBySatiety - pHungerCoef >= 0 ? "+" : "") << getPercent(popularityBySatiety - pHungerCoef) << "% Р·Р° СЃС‹С‚РѕСЃС‚СЊ РЅР°СЃРµР»РµРЅРёСЏ" <<  endl;
+        cout << "   " << (popularityByAcres - pAcreCoef >= 0 ? "+" : "") << getPercent(popularityByAcres - pAcreCoef) << "% Р·Р° РєРѕР»РёС‡РµСЃС‚РІРѕ Р°РєСЂРѕРІ РЅР° С‡РµР»РѕРІРµРєР°" <<  endl;
 
         cout << getRepPhrase(popularity) << endl;
 
         if(isPlague)
-            cout << "Плохие новости! В прошлом году бушевала чума!" << endl;
+            cout << "РџР»РѕС…РёРµ РЅРѕРІРѕСЃС‚Рё! Р’ РїСЂРѕС€Р»РѕРј РіРѕРґСѓ Р±СѓС€РµРІР°Р»Р° С‡СѓРјР°!" << endl;
         cout << endl;
-        cout << " Население: " << population << endl;
+        cout << " РќР°СЃРµР»РµРЅРёРµ: " << population << endl;
         if(populationInc > 0)
-            cout << "   +" << populationInc << " пришли в город" << endl;
+            cout << "   +" << populationInc << " РїСЂРёС€Р»Рё РІ РіРѕСЂРѕРґ" << endl;
         if(hungerDeads > 0)
-            cout << "   -" << hungerDeads << " умерло от голода" << endl;
+            cout << "   -" << hungerDeads << " СѓРјРµСЂР»Рѕ РѕС‚ РіРѕР»РѕРґР°" << endl;
         if(plagueDeads > 0)
-            cout << "   -" << plagueDeads << " умерло от чумы" << endl;
+            cout << "   -" << plagueDeads << " СѓРјРµСЂР»Рѕ РѕС‚ С‡СѓРјС‹" << endl;
 
         cout << endl;
-        cout << " Запасы пшеницы: " << wheatCount << endl;
+        cout << " Р—Р°РїР°СЃС‹ РїС€РµРЅРёС†С‹: " << wheatCount << endl;
         if(wheatReceived > 0)
-            cout << "   +" << wheatReceived << " выращено ( +" << wheatGetPerAcre << " за акр)" << endl;
+            cout << "   +" << wheatReceived << " РІС‹СЂР°С‰РµРЅРѕ ( +" << wheatGetPerAcre << " Р·Р° Р°РєСЂ)" << endl;
         if(wheatLoss > 0)
-            cout << "   -" << wheatLoss << " съели крысы" << endl;
+            cout << "   -" << wheatLoss << " СЃСЉРµР»Рё РєСЂС‹СЃС‹" << endl;
         cout << endl;
-        cout << " Кол-во акров: " << acresCount << endl;
-        cout << "   " << workAcres << " - используются" << endl;
+        cout << " РљРѕР»-РІРѕ Р°РєСЂРѕРІ: " << acresCount << endl;
+        cout << "   " << workAcres << " - РёСЃРїРѕР»СЊР·СѓСЋС‚СЃСЏ" << endl;
 
-        cout << " Стоимость акра: " << acreCost << endl;
+        cout << " РЎС‚РѕРёРјРѕСЃС‚СЊ Р°РєСЂР°: " << acreCost << endl;
         cout << endl;
-        cout << " (?) Необходимо засеять пшеницы для полного урожая: " << min(acresCount, population * maxAcresPerHuman) * wheatSowPerAcre << endl;
-        cout << " (?) Необходимо пшеницы для пропитания: "<< wheatPerHuman * population << " на " << population << " человек(а)" << endl;
+        cout << " (?) РќРµРѕР±С…РѕРґРёРјРѕ Р·Р°СЃРµСЏС‚СЊ РїС€РµРЅРёС†С‹ РґР»СЏ РїРѕР»РЅРѕРіРѕ СѓСЂРѕР¶Р°СЏ: " << min(acresCount, population * maxAcresPerHuman) * wheatSowPerAcre << endl;
+        cout << " (?) РќРµРѕР±С…РѕРґРёРјРѕ РїС€РµРЅРёС†С‹ РґР»СЏ РїСЂРѕРїРёС‚Р°РЅРёСЏ: "<< wheatPerHuman * population << " РЅР° " << population << " С‡РµР»РѕРІРµРє(Р°)" << endl;
         cout << endl;
-        cout << "Enter - Издать указы, Esc - Выйти из игры" << endl;
+        cout << "Enter - РР·РґР°С‚СЊ СѓРєР°Р·С‹, Esc - Р’С‹Р№С‚Рё РёР· РёРіСЂС‹" << endl;
         cout << endl;
 
         while(1){
@@ -260,14 +260,14 @@ int main()
         while(1)
         {
             wheatChange = 0;
-            cout << "(Текущий запас пшеницы: " << wheatCount - wheatChange << ")" << " Сколько акров купить/продать:"; cin >> acresChanging;
+            cout << "(РўРµРєСѓС‰РёР№ Р·Р°РїР°СЃ РїС€РµРЅРёС†С‹: " << wheatCount - wheatChange << ")" << " РЎРєРѕР»СЊРєРѕ Р°РєСЂРѕРІ РєСѓРїРёС‚СЊ/РїСЂРѕРґР°С‚СЊ:"; cin >> acresChanging;
             wheatChange += acresChanging * acreCost;
-            cout << "(Текущий запас пшеницы: " << wheatCount - wheatChange << ")" << " Сколько пшеницы скушать:"; cin >> wheatForEat;
+            cout << "(РўРµРєСѓС‰РёР№ Р·Р°РїР°СЃ РїС€РµРЅРёС†С‹: " << wheatCount - wheatChange << ")" << " РЎРєРѕР»СЊРєРѕ РїС€РµРЅРёС†С‹ СЃРєСѓС€Р°С‚СЊ:"; cin >> wheatForEat;
             wheatChange += wheatForEat;
-            cout << "(Текущий запас пшеницы: " << wheatCount - wheatChange << ")" << " Сколько пшеницы засеять:"; cin >> wheatForSow;
+            cout << "(РўРµРєСѓС‰РёР№ Р·Р°РїР°СЃ РїС€РµРЅРёС†С‹: " << wheatCount - wheatChange << ")" << " РЎРєРѕР»СЊРєРѕ РїС€РµРЅРёС†С‹ Р·Р°СЃРµСЏС‚СЊ:"; cin >> wheatForSow;
             wheatChange += wheatForSow;
             if(wheatChange > wheatCount || wheatForEat < 0 || wheatForSow < 0 || acresCount + acresChanging < 0){
-                cout << "О, повелитель, пощади нас! Мы не способны выполнить ваши указы!" << endl;
+                cout << "Рћ, РїРѕРІРµР»РёС‚РµР»СЊ, РїРѕС‰Р°РґРё РЅР°СЃ! РњС‹ РЅРµ СЃРїРѕСЃРѕР±РЅС‹ РІС‹РїРѕР»РЅРёС‚СЊ РІР°С€Рё СѓРєР°Р·С‹!" << endl;
                 continue;
             }
         }
@@ -318,13 +318,13 @@ int main()
     }
 
     cout << endl;
-    cout << "Игра окончена!" << endl;
-    cout << "Популярность вашего правления составила: " << getPercent(popularity) << "%" << endl;
+    cout << "РРіСЂР° РѕРєРѕРЅС‡РµРЅР°!" << endl;
+    cout << "РџРѕРїСѓР»СЏСЂРЅРѕСЃС‚СЊ РІР°С€РµРіРѕ РїСЂР°РІР»РµРЅРёСЏ СЃРѕСЃС‚Р°РІРёР»Р°: " << getPercent(popularity) << "%" << endl;
     cout << getRepPhrase(popularity) << endl;
 
-    cout << "За ваше правление:" << endl;
-    cout << "   - " << (int)(hungerPercent / (double)roundsCount * 1000.0) / 10.0 << "% населения умерло от голода" << endl;
-    cout << "   - каждый житель вашего королевства имеет: " << acresPerHumanInc * maxAcresPerHuman << " акров земли" << endl;
+    cout << "Р—Р° РІР°С€Рµ РїСЂР°РІР»РµРЅРёРµ:" << endl;
+    cout << "   - " << (int)(hungerPercent / (double)roundsCount * 1000.0) / 10.0 << "% РЅР°СЃРµР»РµРЅРёСЏ СѓРјРµСЂР»Рѕ РѕС‚ РіРѕР»РѕРґР°" << endl;
+    cout << "   - РєР°Р¶РґС‹Р№ Р¶РёС‚РµР»СЊ РІР°С€РµРіРѕ РєРѕСЂРѕР»РµРІСЃС‚РІР° РёРјРµРµС‚: " << acresPerHumanInc * maxAcresPerHuman << " Р°РєСЂРѕРІ Р·РµРјР»Рё" << endl;
 
     return 0;
 }
