@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "../../DynamicArray/DynamicArray/myarray.cpp"
+#include "../../DynamicArray/DynamicArray/Array.h"
 
 TEST(ArrayTest, ArrayConstructorsTests) {
     Array<int> arr1;

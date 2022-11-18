@@ -22,7 +22,7 @@ public:
 	int insert(const T& value);
 	void remove(int index);
 	int size() const;
-	int capacity(); // for tests
+	int capacity();
 
 	class ConstIterator
 	{
@@ -145,6 +145,8 @@ Array<T>& Array<T>::operator=(const Array<T>& other) {
 
 template<typename T>
 Array<T>& Array<T>::operator=(Array<T>&& other) {
+	if (this == &other)
+		return *this;
 
 	free_array();
 
@@ -179,13 +181,14 @@ void Array<T>::remove(int index)
 		throw std::out_of_range("Index must be positive and less then array size!");
 
 	for (int i = index; i < m_size - 1; i++) {
-		items[i] = items[i + 1];
+		items[i] = std::move(items[i + 1]);
 	}
 
 	items[m_size - 1].~T();
 	m_size--;
 }
 
+//TODO
 template<typename T>
 int Array<T>::insert(int index, const T& value)
 {
@@ -198,6 +201,7 @@ int Array<T>::insert(int index, const T& value)
 
 	for (int i = m_size; i > index; i--) {
 		new(&items[i]) T(std::move(items[i - 1]));
+		items[i - 1].~T();
 	}
 
 	new(items + index) T(value);

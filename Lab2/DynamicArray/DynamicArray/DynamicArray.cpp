@@ -9,6 +9,9 @@ int main(int argc, char** argv)
     std::cin >> cap;
 
     Array<Array<int>> arr(cap);
+    
+    arr = std::move(arr);
+
 
     for (int i = 0; i < 12; i++) {
         Array<int> a(cap);
