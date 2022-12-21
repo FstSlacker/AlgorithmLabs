@@ -3,6 +3,8 @@
 #include "CoalesceAllocator.h"
 #include "OSAllocator.h"
 
+#define _10MB 10485760
+
 class MemoryAllocator
 {
 public:
@@ -12,8 +14,10 @@ public:
 	virtual void destroy();
 	virtual void* alloc(size_t size);
 	virtual void free(void* p);
+#ifdef _DEBUG
 	virtual void dumpStat() const;
 	virtual void dumpBlocks() const;
+#endif
 
 private:
 	FixedSizeAllocator m_fsa16;
@@ -28,26 +32,33 @@ private:
 	OSAllocator m_os;
 };
 
-MemoryAllocator::MemoryAllocator()
+MemoryAllocator::MemoryAllocator() :
+									m_fsa16(16, _10MB / 16),
+									m_fsa32(32, _10MB / 32),
+									m_fsa64(64, _10MB / 64),
+									m_fsa128(128, _10MB / 128),
+									m_fsa256(256, _10MB / 256),
+									m_fsa512(512, _10MB / 512),
+									m_coalesce(_10MB)
 {
-
+	//...
 }
 
 MemoryAllocator::~MemoryAllocator()
 {
-	destroy();
+
 }
 
 void MemoryAllocator::init()
 {
-	m_fsa16.init(16, 128);
-	m_fsa32.init(32, 128);
-	m_fsa64.init(64, 128);
-	m_fsa128.init(128, 128);
-	m_fsa256.init(256, 128);
-	m_fsa512.init(512, 128);
+	m_fsa16.init();
+	m_fsa32.init();
+	m_fsa64.init();
+	m_fsa128.init();
+	m_fsa256.init();
+	m_fsa512.init();
 
-	m_coalesce.init(1024 * 1024);
+	m_coalesce.init();
 }
 
 void MemoryAllocator::destroy()
@@ -92,7 +103,7 @@ void* MemoryAllocator::alloc(size_t size)
 	{
 		p = m_fsa512.alloc(size);
 	}
-	else if (size <= 1024 * 1024)
+	else if (size <= _10MB)
 	{
 		p = m_coalesce.alloc(size);
 	}
@@ -140,6 +151,7 @@ void MemoryAllocator::free(void* p)
 	}
 }
 
+#ifdef _DEBUG
 void MemoryAllocator::dumpStat() const
 {
 	std::cout << "FSA16 Stats" << std::endl;
@@ -179,3 +191,4 @@ void MemoryAllocator::dumpBlocks() const
 	std::cout << "OS allocator Blocks Stats" << std::endl;
 	m_os.dumpBlocks();
 }
+#endif

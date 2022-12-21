@@ -26,9 +26,6 @@
     <ClInclude Include="CoalesceAllocator.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="AllocatorBase.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
     <ClInclude Include="OSAllocator.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>

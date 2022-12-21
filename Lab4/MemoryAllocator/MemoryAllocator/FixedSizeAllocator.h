@@ -1,12 +1,17 @@
 #pragma once
 #include <windows.h>
+
+#ifdef _DEBUG
 #include <cassert>
+#define assert_msg(exp, msg) assert(((void)msg, exp))
+#endif
+
 
 class FixedSizeAllocator {
 public:
-	FixedSizeAllocator();
+	FixedSizeAllocator(size_t blockSize, size_t blocksCountInBuffer);
 	~FixedSizeAllocator();
-	void init(size_t blockSize, size_t blocksCountInBuffer);
+	virtual void init();
 	virtual void destroy();
 	virtual void* alloc(size_t size);
 	virtual void free(void* p);
@@ -30,7 +35,7 @@ private:
 	size_t m_blocksCountInBuffer;
 	Buffer* m_firstBuffer;
 
-#ifdef DEBUG
+#ifdef _DEBUG
 	bool isInit;
 	bool isDestroyed;
 	size_t usedBlocksCount;
@@ -43,37 +48,43 @@ private:
 	Buffer* getPointerLocation(void* p);
 };
 
-FixedSizeAllocator::FixedSizeAllocator() 
+FixedSizeAllocator::FixedSizeAllocator(size_t blockSize, size_t blocksCountInBuffer)
 {
-	//...
-}
-
-FixedSizeAllocator::~FixedSizeAllocator()
-{
-	destroy();
-}
-
-void FixedSizeAllocator::init(size_t blockSize, size_t blocksCountInBuffer)
-{
-
-#ifdef DEBUG
-	isInit = true;
-	isDestroyed = false;
-	m_blockSize = blockSize + sizeof(size_t); // Add marker size if debug mode
+#ifdef _DEBUG
+	m_blockSize = blockSize + sizeof(size_t); // Add marker size if _DEBUG mode
 #else
 	m_blockSize = blockSize;
 #endif
 
 	m_blocksCountInBuffer = blocksCountInBuffer;
-	m_firstBuffer = allocBuffer();
+}
 
+FixedSizeAllocator::~FixedSizeAllocator()
+{
+#ifdef _DEBUG
+	assert_msg(isInit == false, "Allocator not destroyed before destructor call!");
+#endif
+}
+
+void FixedSizeAllocator::init()
+{
+
+#ifdef _DEBUG
+	assert_msg(!isInit, "Allocator already initialized!");
+	isInit = true;
+	usedBlocksCount = 0;
+#endif
+
+	m_firstBuffer = allocBuffer();
 }
 
 void FixedSizeAllocator::destroy() 
 {
-#ifdef DEBUG
-	assert(!isInit, "Allocator not initialized!");
-#endif // DEBUG
+#ifdef _DEBUG
+	assert_msg(isInit, "Allocator not initialized!");
+	assert_msg(usedBlocksCount == 0, "Some memory blocks were not free!");
+	isInit = false;
+#endif
 		
 	Buffer* buf = m_firstBuffer;
 
@@ -90,8 +101,8 @@ void FixedSizeAllocator::destroy()
 void* FixedSizeAllocator::alloc(size_t size)
 {
 
-#ifdef DEBUG
-	assert(!isInit, "Allocator not initialized!");
+#ifdef _DEBUG
+	assert_msg(isInit, "Allocator not initialized!");
 #endif
 
 	Buffer* buffer = m_firstBuffer;
@@ -108,7 +119,7 @@ void* FixedSizeAllocator::alloc(size_t size)
 
 	void* p = static_cast<byte*>(buffer->blocks) + buffer->freeHeadBlock * m_blockSize;
 
-#ifdef DEBUG
+#ifdef _DEBUG
 	*static_cast<size_t*>(static_cast<void*>(static_cast<byte*>(p) + (m_blockSize - sizeof(size_t)))) = kMarker;
 #endif
 
@@ -123,7 +134,7 @@ void* FixedSizeAllocator::alloc(size_t size)
 	}
 
 
-#ifdef DEBUG
+#ifdef _DEBUG
 	usedBlocksCount++;
 #endif
 
@@ -133,8 +144,8 @@ void* FixedSizeAllocator::alloc(size_t size)
 void FixedSizeAllocator::free(void* p)
 {
 
-#ifdef DEBUG
-	assert(!isInit, "Allocator not initialized!");
+#ifdef _DEBUG
+	assert_msg(isInit, "Allocator not initialized!");
 #endif
 
 	Buffer* buffer = getPointerLocation(p);
@@ -142,26 +153,26 @@ void FixedSizeAllocator::free(void* p)
 	if (buffer != nullptr)
 	{
 
-#ifdef DEBUG
+#ifdef _DEBUG
 		size_t marker = *static_cast<size_t*>(static_cast<void*>(static_cast<byte*>(p) + (m_blockSize - sizeof(size_t))));
-		assert(marker == kMarker, "FSA:Memory corrupt detected!");
+		assert_msg(marker == kMarker, "FSA:Memory corrupt detected!");
 #endif
 		*static_cast<size_t*>(p) = buffer->freeHeadBlock;
 		buffer->freeHeadBlock = static_cast<size_t>((static_cast<byte*>(p) - static_cast<byte*>(buffer->blocks)) / m_blockSize);
 
-#ifdef DEBUG
+#ifdef _DEBUG
 		usedBlocksCount--;
 #endif
 
 	}
 }
 
-#ifdef DEBUG
+#ifdef _DEBUG
 void FixedSizeAllocator::dumpStat() const
 {
 
 
-	assert(!isInit, "Allocator not initialized!");
+	assert_msg(isInit, "Allocator not initialized!");
 
 	Buffer* buffer = m_firstBuffer;
 	int bufferCounter = 0;
@@ -190,7 +201,7 @@ void FixedSizeAllocator::dumpStat() const
 void FixedSizeAllocator::dumpBlocks() const
 {
 
-	assert(!isInit, "Allocator not initialized!");
+	assert_msg(isInit, "Allocator not initialized!");
 
 	Buffer* buffer = m_firstBuffer;
 
@@ -264,9 +275,9 @@ void FixedSizeAllocator::freeBuffer(Buffer* buffer)
 FixedSizeAllocator::Buffer* FixedSizeAllocator::getPointerLocation(void* p)
 {
 
-#ifdef DEBUG
-	assert(!isInit, "Allocator not initialized!");
-#endif // DEBUG
+#ifdef _DEBUG
+	assert_msg(isInit, "Allocator not initialized!");
+#endif // _DEBUG
 
 	Buffer* buffer = m_firstBuffer;
 

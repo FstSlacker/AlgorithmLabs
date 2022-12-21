@@ -1,18 +1,24 @@
 #pragma once
 #include <windows.h>
+
+#ifdef _DEBUG
 #include <cassert>
+#define assert_msg(exp, msg) assert(((void)msg, exp))
+#endif
 
 class CoalesceAllocator
 {
 public:
-	CoalesceAllocator();
+	CoalesceAllocator(size_t bufferSize);
 	~CoalesceAllocator();
-	void init(size_t bufferSize);
+	virtual void init();
 	virtual void destroy();
 	virtual void* alloc(size_t size);
 	virtual void free(void* p);
+#ifdef _DEBUG
 	virtual void dumpStat() const;
 	virtual void dumpBlocks() const;
+#endif
 	virtual bool contains(void* p);
 
 private:
@@ -45,11 +51,26 @@ private:
 
 	struct Block
 	{
+
+#ifdef _DEBUG
+		size_t startMarker;
+#endif
 		bool isFree;
 		void* prevBlock; // Prev block in buffer
 		void* nextBlock; // Next block in buffer
 		size_t size; // Full size with metadata
 		void* data; // User data or FreeBlockInfo if this block is free
+
+#ifdef _DEBUG
+		size_t endMarker;
+
+		void clearMarkers()
+		{
+			startMarker = 0;
+			endMarker = 0;
+		}
+#endif
+
 
 		size_t getPayloadSize()
 		{
@@ -60,11 +81,11 @@ private:
 		{
 			return static_cast<FreeBlockInfo*>(this->data);
 		}
+
 	};
 
-#ifdef DEBUG
+#ifdef _DEBUG
 	bool isInit;
-	bool isDestroyed;
 	size_t usedBlocksCount;
 
 	const size_t kMarker = 12345;
@@ -79,33 +100,36 @@ private:
 };
 
 
-CoalesceAllocator::CoalesceAllocator()
+CoalesceAllocator::CoalesceAllocator(size_t bufferSize)
 {
-
+	m_BufferSize = bufferSize + sizeof(Block);
 }
 
 CoalesceAllocator::~CoalesceAllocator()
 {
-	destroy();
+#ifdef _DEBUG
+	assert_msg(!isInit, "Allocator not destroyed before destructor call!");
+#endif
 }
 
-void CoalesceAllocator::init(size_t bufferSize)
+void CoalesceAllocator::init()
 {
-#ifdef DEBUG
-	isInit = true;
-	isDestroyed = false;
 
-	m_BufferSize = bufferSize + sizeof(Block) + sizeof(size_t) * 2; // Add size of markers
-#else
-	m_BufferSize = bufferSize + sizeof(Block);
+#ifdef _DEBUG
+	assert_msg(!isInit, "Allocator already initialized!");
+	isInit = true;
+	usedBlocksCount = 0;
 #endif
+
 	m_firstBuffer = allocBuffer();
 }
 
 void CoalesceAllocator::destroy()
 {
-#ifdef DEBUG
-	assert(isInit, "Allocator not initialized!");
+#ifdef _DEBUG
+	assert_msg(isInit, "Allocator not initialized!");
+	assert_msg(usedBlocksCount == 0, "Some memory blocks were not free!");
+	isInit = false;
 #endif
 	Buffer* buf = m_firstBuffer;
 
@@ -121,8 +145,8 @@ void CoalesceAllocator::destroy()
 
 void* CoalesceAllocator::alloc(size_t size)
 {
-#ifdef DEBUG
-	assert(isInit, "Allocator not initialized!");
+#ifdef _DEBUG
+	assert_msg(isInit, "Allocator not initialized!");
 #endif
 
 	Buffer* buffer = m_firstBuffer;
@@ -169,6 +193,11 @@ void* CoalesceAllocator::alloc(size_t size)
 		newFreeBlock->nextBlock = freeBlock->nextBlock;
 		newFreeBlock->data = static_cast<byte*>(static_cast<void*>(newFreeBlock)) + sizeof(Block);
 
+#ifdef _DEBUG
+		newFreeBlock->startMarker = kMarker;
+		newFreeBlock->endMarker = kMarker;
+#endif
+
 		if (freeBlock->nextBlock != nullptr)
 		{
 			static_cast<Block*>(freeBlock->nextBlock)->prevBlock = newFreeBlock;
@@ -205,13 +234,17 @@ void* CoalesceAllocator::alloc(size_t size)
 		buffer->freeHeadBlock = nextFreeBlock;
 	}
 
+#ifdef _DEBUG
+	usedBlocksCount++;
+#endif
+
 	return freeBlock->data;
 }
 
 void CoalesceAllocator::free(void* p)
 {
-#ifdef DEBUG
-	assert(isInit, "Allocator not initialized!");
+#ifdef _DEBUG
+	assert_msg(isInit, "Allocator not initialized!");
 #endif
 
 	Buffer* buffer = getPointerLocation(p);
@@ -220,6 +253,10 @@ void CoalesceAllocator::free(void* p)
 	{
 		Block* block = static_cast<Block*>(static_cast<void*>(static_cast<byte*>(p) - sizeof(Block)));
 
+#ifdef _DEBUG
+		assert_msg(block->startMarker == kMarker, "Coalesce:Memory corrupt detected!");
+		assert_msg(block->endMarker == kMarker, "Coalesce:Memory corrupt detected!");
+#endif
 		// Append block to left neighbour
 		if (block->prevBlock != nullptr && static_cast<Block*>(block->prevBlock)->isFree)
 		{
@@ -228,6 +265,9 @@ void CoalesceAllocator::free(void* p)
 			prevBlock->nextBlock = block->nextBlock;
 			prevBlock->size = prevBlock->size + block->size;
 
+#ifdef _DEBUG
+			block->clearMarkers(); // Delete markers of block
+#endif
 			block = prevBlock;
 		}
 		// If block hasnt free left neighbour add block to free list
@@ -252,12 +292,18 @@ void CoalesceAllocator::free(void* p)
 			Block* nextBlock = static_cast<Block*>(block->nextBlock);
 			nextBlock->getFreeBlockInfo()->removeFromFreeList(); // remove right neighbour from free list
 
+#ifdef _DEBUG
+			nextBlock->clearMarkers(); // Delete markers of block
+#endif
 			block->nextBlock = nextBlock->nextBlock;
 			block->size = block->size + nextBlock->size;
 		}
 
 		block->isFree = true;
 
+#ifdef _DEBUG
+		usedBlocksCount--;
+#endif
 	}
 }
 
@@ -277,6 +323,11 @@ CoalesceAllocator::Buffer* CoalesceAllocator::allocBuffer()
 	block->size = m_BufferSize;
 	block->data = static_cast<byte*>(newBuffer->blocks) + sizeof(Block);
 
+#ifdef _DEBUG
+	block->startMarker = kMarker;
+	block->endMarker = kMarker;
+#endif
+
 	FreeBlockInfo* info = block->getFreeBlockInfo();
 	info->prevBlock = nullptr;
 	info->nextBlock = nullptr;
@@ -284,10 +335,10 @@ CoalesceAllocator::Buffer* CoalesceAllocator::allocBuffer()
 	return newBuffer;
 }
 
-#ifdef DEBUG
+#ifdef _DEBUG
 void CoalesceAllocator::dumpStat() const
 {
-	assert(isInit, "Allocator not initialized!");
+	assert_msg(isInit, "Allocator not initialized!");
 
 
 	Buffer* buf = m_firstBuffer;
@@ -325,7 +376,7 @@ void CoalesceAllocator::dumpStat() const
 void CoalesceAllocator::dumpBlocks() const
 {
 
-	assert(isInit, "Allocator not initialized!");
+	assert_msg(isInit, "Allocator not initialized!");
 
 	Buffer* buf = m_firstBuffer;
 
@@ -370,8 +421,8 @@ void CoalesceAllocator::freeBuffer(Buffer* buffer)
 
 CoalesceAllocator::Buffer* CoalesceAllocator::getPointerLocation(void* p)
 {
-#ifdef DEBUG
-	assert(isInit, "Allocator not initialized!");
+#ifdef _DEBUG
+	assert_msg(isInit, "Allocator not initialized!");
 #endif
 	Buffer* buffer = m_firstBuffer;
 

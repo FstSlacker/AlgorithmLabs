@@ -142,7 +142,6 @@
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AllocatorBase.h" />
     <ClInclude Include="CoalesceAllocator.h" />
     <ClInclude Include="FixedSizeAllocator.h" />
     <ClInclude Include="MemoryAllocator.h" />

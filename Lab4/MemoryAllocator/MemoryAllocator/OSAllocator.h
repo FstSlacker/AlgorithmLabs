@@ -1,6 +1,11 @@
 #pragma once
 #include <windows.h>
 
+#ifdef _DEBUG
+#include <cassert>
+#define assert_msg(exp, msg) assert(((void)msg, exp))
+#endif
+
 class OSAllocator
 {
 public:
@@ -9,8 +14,10 @@ public:
 	virtual void destroy();
 	virtual void* alloc(size_t size);
 	virtual void free(void* p);
+#ifdef _DEBUG
 	virtual void dumpStat() const;
 	virtual void dumpBlocks() const;
+#endif
 	virtual bool contains(void* p);
 
 private:
@@ -34,6 +41,12 @@ private:
 		}
 	};
 
+#ifdef _DEBUG
+	bool isInit;
+
+	size_t usedBlocksCount;
+#endif
+
 	Buffer* m_firstBuffer;
 
 	Buffer* allocBuffer(size_t size);
@@ -43,16 +56,24 @@ private:
 
 OSAllocator::OSAllocator()
 {
-
+#ifdef _DEBUG
+	isInit = true;
+#endif
 }
 
 OSAllocator::~OSAllocator()
 {
-	destroy();
+#ifdef _DEBUG
+	assert_msg(isInit == false, "Allocator not destroyed before destructor call!");
+#endif
 }
 
 void OSAllocator::destroy()
 {
+#ifdef _DEBUG
+	assert_msg(usedBlocksCount == 0, "Allocator have used blocks and can't be destroyed!");
+	isInit = false;
+#endif
 	Buffer* buffer = m_firstBuffer;
 	while (buffer != nullptr)
 	{
@@ -66,6 +87,9 @@ void OSAllocator::destroy()
 
 void* OSAllocator::alloc(size_t size)
 {
+#ifdef _DEBUG
+	isInit = true;
+#endif
 	Buffer* newBuffer = allocBuffer(size);
 
 	if (m_firstBuffer != nullptr)
@@ -75,12 +99,17 @@ void* OSAllocator::alloc(size_t size)
 	}
 	
 	m_firstBuffer = newBuffer;
-
+#ifdef _DEBUG
+	usedBlocksCount++;
+#endif
 	return newBuffer->data;
 }
 
 void OSAllocator::free(void* p)
 {
+#ifdef _DEBUG
+	assert_msg(isInit, "Allocator not initialized!");
+#endif
 	Buffer* buffer = getPointerLocation(p);
 
 	if (buffer == m_firstBuffer)
@@ -91,10 +120,15 @@ void OSAllocator::free(void* p)
 	buffer->removeFromList();
 
 	freeBuffer(buffer);
+#ifdef _DEBUG
+	usedBlocksCount--;
+#endif
 }
 
+#ifdef _DEBUG
 void OSAllocator::dumpStat() const
 {
+	assert_msg(isInit, "Allocator not initialized!");
 	Buffer* buf = m_firstBuffer;
 	size_t bufCount = 0;
 	while (buf != nullptr)
@@ -108,6 +142,7 @@ void OSAllocator::dumpStat() const
 
 void OSAllocator::dumpBlocks() const
 {
+	assert_msg(isInit, "Allocator not initialized!");
 	Buffer* buf = m_firstBuffer;
 
 	while (buf != nullptr)
@@ -122,6 +157,7 @@ void OSAllocator::dumpBlocks() const
 	}
 
 }
+#endif
 
 bool OSAllocator::contains(void* p)
 {
@@ -151,11 +187,14 @@ void OSAllocator::freeBuffer(Buffer* buf)
 
 OSAllocator::Buffer* OSAllocator::getPointerLocation(void* p)
 {
+#ifdef _DEBUG
+	assert_msg(isInit, "Allocator not initialized!");
+#endif
 	Buffer* buffer = m_firstBuffer;
 
 	while (buffer != nullptr)
 	{
-		if (static_cast<void*>(buffer) == p)
+		if (static_cast<void*>(buffer->data) == p)
 		{
 			return buffer;
 		}
